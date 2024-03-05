@@ -7,25 +7,19 @@ import {
     updateTodoFx,
 } from "./api";
 import { createGate } from "effector-react";
-import { or, reset } from "patronum";
+import { reset } from "patronum";
 
 export const changedValue = createEvent<string>();
 export const submittedForm = createEvent();
 export const changedToNextPage = createEvent();
 export const createTodoClicked = createEvent();
 export const clickedDeleteTodo = createEvent<number>();
-export const clickedUpdateTodo = createEvent<{
-    status: boolean;
-    todoId: number;
-}>();
+export const clickedUpdateTodo = createEvent<ITodo>();
 
 export const $inputValue = createStore("");
 export const $todoList = createStore<[] | ITodo[]>([]);
 export const $currentPage = createStore(1);
-export const $loadingUpdateTodo = or(
-    deleteTodoFx.pending,
-    updateTodoFx.pending,
-);
+export const $pendingTodos = createStore<number[]>([]);
 
 export const initTodoListGate = createGate();
 
@@ -85,9 +79,30 @@ sample({
 sample({
     source: $todoList,
     clock: deleteTodoFx.done,
-    fn: (todoListPrev, { result }) =>
-        todoListPrev.filter((todo) => todo.id !== result.id),
+    fn: (todoListPrev, effectDone) =>
+        todoListPrev.filter((todo) => todo.id !== effectDone.params.valueOf()),
     target: $todoList,
+});
+
+sample({
+    clock: [updateTodoFx, deleteTodoFx],
+    source: $pendingTodos,
+    fn: (pending, params) => [
+        ...pending,
+        typeof params === "number" ? params : params.id,
+    ],
+    target: $pendingTodos,
+});
+
+sample({
+    clock: [updateTodoFx.finally, deleteTodoFx.finally],
+    source: $pendingTodos,
+    fn: (pending, { params }) =>
+        pending.filter((id) => {
+            if (typeof params === "number") return id !== params;
+            return id !== params.id;
+        }),
+    target: $pendingTodos,
 });
 
 reset({

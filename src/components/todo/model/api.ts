@@ -3,26 +3,26 @@ import { createEffect } from "effector";
 export interface ITodo {
     userId: number;
     id: number;
-    todo: string;
-    completed: string;
+    title: string;
+    completed: boolean;
 }
 
 export const getTodoListFx = createEffect<number, ITodo[]>(
     async (page) =>
         await fetch(
-            `https://dummyjson.com/todos?skip=${page * 10 - 10}&limit=10`,
+            `https://jsonplaceholder.typicode.com/todos?_page=${page}&_limit=10`,
         )
             .then((res) => res.json())
-            .then((res) => res.todos),
+            .then((todoList) => todoList),
 );
 
 export const createTodoFx = createEffect<string, ITodo>(
     async (todoTitle) =>
-        await fetch(`https://dummyjson.com/todos/add`, {
+        await fetch(`https://jsonplaceholder.typicode.com/todos`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                todo: todoTitle,
+                title: todoTitle,
                 completed: false,
                 userId: 5,
             }),
@@ -31,26 +31,21 @@ export const createTodoFx = createEffect<string, ITodo>(
             .then((todo) => todo),
 );
 
-export const updateTodoFx = createEffect<
-    { todoId: number; status: boolean },
-    ITodo
->(
-    async ({ todoId, status }) =>
-        await fetch(`https://dummyjson.com/todos/${todoId}`, {
-            method: "PUT",
+export const updateTodoFx = createEffect<ITodo, ITodo>(
+    async (todo) =>
+        await fetch(`https://jsonplaceholder.typicode.com/todos/${todo.id}`, {
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                completed: status,
-            }),
+            body: JSON.stringify(todo),
         })
             .then((res) => res.json())
             .then((todo) => todo),
 );
 
-export const deleteTodoFx = createEffect<number, ITodo>(
+export const deleteTodoFx = createEffect<number, object>(
     async (todoId) =>
-        await fetch(`https://dummyjson.com/todos/${todoId}`, {
-            method: "delete",
+        await fetch(`https://jsonplaceholder.typicode.com/todos/${todoId}`, {
+            method: "DELETE",
         })
             .then((res) => res.json())
             .then((todo) => todo),

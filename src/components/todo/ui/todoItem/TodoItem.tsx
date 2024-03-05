@@ -1,17 +1,17 @@
 import { Button, List } from "antd";
 import { useUnit } from "effector-react";
 import {
-    $loadingUpdateTodo,
+    $pendingTodos,
     clickedDeleteTodo,
     clickedUpdateTodo,
 } from "../../model/model";
 import { ITodo } from "../../model/api";
 
 const TodoItem = ({ item }: { item: ITodo }) => {
-    const [handleDeleteTodo, handleUpdateTodo, pending] = useUnit([
+    const [handleDeleteTodo, handleUpdateTodo, pendingTodos] = useUnit([
         clickedDeleteTodo,
         clickedUpdateTodo,
-        $loadingUpdateTodo,
+        $pendingTodos,
     ]);
 
     return (
@@ -20,18 +20,18 @@ const TodoItem = ({ item }: { item: ITodo }) => {
                 item.completed ? (
                     <Button
                         onClick={() =>
-                            handleUpdateTodo({ status: false, todoId: item.id })
+                            handleUpdateTodo({ ...item, completed: false })
                         }
-                        loading={pending}
+                        loading={pendingTodos.includes(item.id)}
                     >
                         Выполнено
                     </Button>
                 ) : (
                     <Button
                         onClick={() =>
-                            handleUpdateTodo({ status: true, todoId: item.id })
+                            handleUpdateTodo({ ...item, completed: true })
                         }
-                        loading={pending}
+                        loading={pendingTodos.includes(item.id)}
                         type="primary"
                     >
                         Выполнить
@@ -39,7 +39,7 @@ const TodoItem = ({ item }: { item: ITodo }) => {
                 ),
 
                 <Button
-                    loading={pending}
+                    loading={pendingTodos.includes(item.id)}
                     onClick={() => handleDeleteTodo(item.id)}
                     danger
                 >
@@ -47,7 +47,7 @@ const TodoItem = ({ item }: { item: ITodo }) => {
                 </Button>,
             ]}
         >
-            <div>{item.todo}</div>
+            <div>{item.title}</div>
         </List.Item>
     );
 };
